@@ -1,10 +1,16 @@
+var fs = require('fs');
+var path = require('path');
 var util = require('util');
-var CoreCompiler = require('./core').Compiler;
+var os = require('os');
 var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
 
+var async = require('async');
+
+var CoreCompiler = require('./core').Compiler;
+var fsHelper = require('../fsHelper');
+
 function JavaCompiler(options) {
-  var self = this;
   CoreCompiler.call(this, options);
 }
 
@@ -13,22 +19,53 @@ util.inherits(JavaCompiler, CoreCompiler);
 JavaCompiler.prototype.prepare = function() {
   var self = this;
 
+  // Assign a random id
+  this.id = Math.random().toString(36).substr(2);
+
   // TODO: Determine and set absolute paths for compilers, ant etc.
 
-  // TODO: Create a temporary workspace in /tmp
+  // TODO: tmpDir is not available for node 0.6.x
+  var tmpDir = os.tmpDir ? os.tmpDir() : '/tmp';
+  this.workspace = path.join(tmpDir, this.id);
+  async.waterfall([
+  
+    // Create a temporary workspace in /tmp
+    function(next) {
+      // TODO: Asyncify
+      fs.mkdirSync(self.workspace);
+      fs.mkdirSync(path.join(self.workspace, 'src'));
+      fs.mkdirSync(path.join(self.workspace, 'test'));
+      fs.mkdirSync(path.join(self.workspace, 'lib'));
+      next();
+    },
 
-  // TODO: Get the source code from specified vfs to workspace/src
+    // TODO: Get the source code from specified vfs to workspace/src
+    function(next) {
+      var vfs = self.options.vfs;
+      fsHelper.copyFromVfs({
+        vfs: vfs,
+        dest: path.join(self.workspace, 'src')
+      }, next);
+    },
 
-  // TODO: Copy required resources to workspace
-
-  self.emit('status', 'prepared');
-  self.emit('done');
+    // TODO: Copy required resources to workspace
+    function(next) {
+      fsHelper.copyResources({
+        workspace: self.workspace,
+        language: self.options.language,
+        version: self.options.version
+      }, next);
+    }
+  ],function(error) {
+    self.emit('status', 'prepared');
+    self.emit('done');    
+  });
 };
 
 JavaCompiler.prototype.clean = function() {
   var self = this;
   var options = {
-    cwd: this.options.workspace
+    cwd: this.workspace
   };
 
   exec('ant clean', options, function(error, stdout, stderr) {
@@ -49,7 +86,7 @@ JavaCompiler.prototype.clean = function() {
 JavaCompiler.prototype.compile = function() {
   var self = this;
   var options = {
-    cwd: this.options.workspace
+    cwd: this.workspace
   };
 
   self.emit('status', 'compiling');
@@ -72,7 +109,7 @@ JavaCompiler.prototype.compile = function() {
 JavaCompiler.prototype.run = function() {
   var self = this;
   var options = {
-    cwd: this.options.workspace,
+    cwd: this.workspace,
     //maxBuffer: 2000*1024,
     timeout: 5000
   };
@@ -97,7 +134,7 @@ JavaCompiler.prototype.run = function() {
 JavaCompiler.prototype.test = function() {
   var self = this;
   var options = {
-    cwd: this.options.workspace,
+    cwd: this.workspace,
     //maxBuffer: 2000*1024,
     timeout: 5000
   };

@@ -37,29 +37,49 @@ describe('Compiler', function() {
     compiler.emit('test');
   });
 
-  it('should compile a sample file', function(done) {
+  describe('valid compiler', function() {
     var compiler = new Compiler({
       vfs: vfsLocal({ root: process.cwd() + '/test/validSample/' }),
       language: 'java',
       version: '1.6'
     });
-    compiler.on('compiled', function() {
-      done();
+
+    it('should successfully prepare workspace', function(done) {
+      compiler.on('status', function(status) {
+        if(status === 'prepared') {
+          done();
+        }
+      });
+      compiler.prepare();
     });
-    compiler.compile();
+
+    it('should compile a sample file', function(done) {
+      compiler.on('compiled', function() {
+        done();
+      });
+      compiler.compile();
+    });
   });
 
-  it('should return error for compilation failure', function(done) {
+  describe('invalid compiler', function() {
     var compiler = new Compiler({
       vfs: vfsLocal({ root: process.cwd() + '/test/invalidSample/' }),
       language: 'java',
       version: '1.6'
     });
-    compiler.on('error', function(error) {
-      error.should.be.an.instanceOf(Error);
-      error.toString().should.match(/';' expected/);
-      done();
+
+    it('should return error for compilation failure', function(done) {
+      compiler.on('error', function(error) {
+        error.should.be.an.instanceOf(Error);
+        error.toString().should.match(/';' expected/);
+        done();
+      });
+      compiler.on('status', function(status) {
+        if(status === 'prepared') {
+          compiler.compile();
+        }
+      });
+      compiler.prepare();
     });
-    compiler.compile();
   });
 });
