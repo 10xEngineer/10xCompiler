@@ -1,0 +1,44 @@
+<project name="PROJECT_NAME" basedir="." default="default">
+	<property name="src_dir" value="src" />
+	<property name="build_dir" value="build" />
+	<property name="lib_dir" value="lib" />
+	<property name="jar_dir" value="dist" />
+	<property name="class_dir" value="${build_dir}/class" />
+	<property name="jar_file" value="${jar_dir}/${ant.project.name}.jar" />
+
+	<path id="build_classpath">
+		<fileset dir="${lib_dir}">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<mkdir dir="${jar_dir}"/>
+	<manifestclasspath property="manifest_classpath" jarfile="${jar_file}">
+		<classpath refid="build_classpath" />
+	</manifestclasspath>
+
+	<target name="clean">
+		<delete dir="${build_dir}"/>
+		<delete file="${jar_file}"/>
+	</target>
+
+	<target name="compile">
+		<mkdir dir="${class_dir}"/>
+		<javac srcdir="${src_dir}" destdir="${class_dir}" debug="on" 
+			debuglevel="lines,vars,source" includeantruntime="false">
+			<classpath>
+				<path refid="build_classpath"/>
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="run" depends="compile">
+		<java classpath="${class_dir}" classname="${main_class}" fork="true">
+		<classpath>
+			<path refid="build_classpath"/>
+		</classpath>
+		</java>
+	</target>
+
+	<target name="default" depends="clean,compile"/>
+</project>
