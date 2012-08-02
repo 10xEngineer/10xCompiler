@@ -28,7 +28,7 @@ JavaCompiler.prototype.prepare = function() {
   var tmpDir = os.tmpDir ? os.tmpDir() : '/tmp';
   this.workspace = path.join(tmpDir, this.id);
   async.waterfall([
-  
+
     // Create a temporary workspace in /tmp
     function(next) {
       // TODO: Asyncify
@@ -58,7 +58,7 @@ JavaCompiler.prototype.prepare = function() {
     }
   ],function(error) {
     self.emit('status', 'prepared');
-    self.emit('done');    
+    self.emit('done');
   });
 };
 
