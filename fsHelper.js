@@ -8,7 +8,7 @@ module.exports.copyResources = function(options, callback) {
     return callback(new Error('One of required params not present.'));
   }
 
-  var src = path.join(process.cwd(), 'resources', options.language, options.version);
+  var src = path.join(__dirname, 'resources', options.language, options.version);
   copyLocalDir(src, options.workspace, callback);
 };
 
