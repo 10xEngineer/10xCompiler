@@ -33,7 +33,7 @@
 	</target>
 
 	<target name="run" depends="compile">
-		<java classpath="${class_dir}" classname="${main_class}" fork="true">
+		<java classpath="${class_dir}" classname="Main" fork="true">
 		<classpath>
 			<path refid="build_classpath"/>
 		</classpath>
